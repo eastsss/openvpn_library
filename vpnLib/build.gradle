@@ -4,6 +4,12 @@ group = 'com.polecat.openvpn'
 android {
     compileSdkVersion 33
 
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     defaultConfig {
         minSdkVersion 16 
         targetSdkVersion 33
