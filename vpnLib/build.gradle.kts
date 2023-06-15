@@ -1,4 +1,4 @@
-import com.android.build.gradle.api.ApplicationVariant
+import com.android.build.gradle.api.LibraryVariant
 
 /*
  * Copyright (c) 2012-2016 Arne Schwabe
@@ -6,7 +6,7 @@ import com.android.build.gradle.api.ApplicationVariant
  */
 
 plugins {
-    id("com.android.application")
+    id("com.android.library")
     id("checkstyle")
 
     id("kotlin-android")
