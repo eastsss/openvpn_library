@@ -156,10 +156,8 @@ public class OrbotHelper {
      */
     public synchronized void removeStatusCallback(StatusCallback cb) {
         statusCallbacks.remove(cb);
-        try{
-            if (statusCallbacks.size() == 0) mContext.unregisterReceiver(orbotStatusReceiver);
-        }
-        catch (IllegalArgumentException ignored){}
+        if (statusCallbacks.size() == 0)
+            mContext.unregisterReceiver(orbotStatusReceiver);
     }
 
     public void sendOrbotStartAndStatusBroadcast() {
