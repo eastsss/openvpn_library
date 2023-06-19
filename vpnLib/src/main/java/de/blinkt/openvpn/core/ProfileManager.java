@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import de.blinkt.openvpn.VpnProfile;
+import openvpn.core.ProfileEncryption;
 
 public class ProfileManager {
     private static final String PREFS_NAME = "VPNList";
@@ -54,7 +55,7 @@ public class ProfileManager {
     private synchronized static void checkInstance(Context context) {
         if (instance == null) {
             instance = new ProfileManager();
-            ProfileEncryption.initMasterCryptAlias(context);
+            ProfileEncryption.initMasterCryptAlias();
             instance.loadVPNList(context);
         }
     }
