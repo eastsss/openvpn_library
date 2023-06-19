@@ -10,6 +10,7 @@ plugins {
     id("checkstyle")
 
     id("kotlin-android")
+    id("maven-publish")
 }
 
 android {
