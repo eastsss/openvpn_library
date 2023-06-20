@@ -10,21 +10,6 @@ plugins {
     id("checkstyle")
 
     id("kotlin-android")
-    id("maven-publish")
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.github.eastsss"
-            artifactId = "openvpn_library"
-            version = "1.0"
-
-            afterEvaluate {
-                from(components["release"])
-            }
-        }
-    }
 }
 
 android {
@@ -98,12 +83,6 @@ android {
 
     buildFeatures {
         aidl = true
-    }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
     }
 }
 

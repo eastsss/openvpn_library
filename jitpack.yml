@@ -2,4 +2,3 @@ jdk:
   - openjdk17
 before_install:
   - sdk install maven
-  - apt-get install -y swig
