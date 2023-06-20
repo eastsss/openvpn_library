@@ -35,6 +35,9 @@ android {
     ndkVersion = "25.1.8937393"
 
     defaultConfig {
+        aarMetadata {
+            minCompileSdk = 21
+        }
         minSdk = 21
         targetSdk = 33
         externalNativeBuild {
@@ -66,23 +69,6 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            // ~/.gradle/gradle.properties
-            val keystoreFile: String? by project
-            storeFile = keystoreFile?.let { file(it) }
-            val keystorePassword: String? by project
-            storePassword = keystorePassword
-            val keystoreAliasPassword: String? by project
-            keyPassword = keystoreAliasPassword
-            val keystoreAlias: String? by project
-            keyAlias = keystoreAlias
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-
-    }
-
     lint {
         enable += setOf(
             "BackButton",
@@ -94,17 +80,6 @@ android {
         )
         checkOnly += setOf("ImpliedQuantity", "MissingQuantity")
         disable += setOf("MissingTranslation", "UnsafeNativeCodeLocation")
-    }
-
-    buildTypes {
-        getByName("release") {
-            if (project.hasProperty("icsopenvpnDebugSign")) {
-                logger.warn("property icsopenvpnDebugSign set, using debug signing for release")
-                signingConfig = android.signingConfigs.getByName("debug")
-            } else {
-                signingConfig = signingConfigs.getByName("release")
-            }
-        }
     }
 
     compileOptions {
