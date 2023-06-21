@@ -35,13 +35,13 @@
             android:name="android.content.APP_RESTRICTIONS"
             android:resource="@xml/app_restrictions" />
 
-        <activity
+        <!--<activity
             android:name=".activities.DisconnectVPN"
             android:autoRemoveFromRecents="true"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:taskAffinity=".DisconnectVPN"
-            android:theme="@style/blinkt.dialog" />
+            android:theme="@style/blinkt.dialog" />-->
 
 
         <service
@@ -70,7 +70,7 @@
             android:exported="false"
             android:process=":openvpn" />
 
-        <activity android:name=".api.GrantPermissionsActivity"
+        <!--<activity android:name=".api.GrantPermissionsActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -81,7 +81,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
-        </activity>
+        </activity>-->
 
         <receiver android:name=".OnBootReceiver"
                 android:exported="true">
@@ -97,7 +97,7 @@
                 android:permission="android.permission.BIND_JOB_SERVICE"/>
 
 
-        <activity
+        <!--<activity
             android:name=".LaunchVPN"
             android:autoRemoveFromRecents="true"
             android:excludeFromRecents="true"
@@ -111,7 +111,7 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity>-->
         <!--
         <receiver android:name="core.GetRestrictionReceiver">
             <intent-filter>
@@ -119,7 +119,7 @@
             </intent-filter>
         </receiver>
         -->
-        <activity android:name=".api.RemoteAction"
+        <!--<activity android:name=".api.RemoteAction"
                 android:launchMode="singleInstance"
                 android:autoRemoveFromRecents="true"
                 android:excludeFromRecents="true"
@@ -143,7 +143,7 @@
         <activity-alias
                 android:name=".api.ResumeVPN"
                 android:exported="true"
-                android:targetActivity=".api.RemoteAction" />
+                android:targetActivity=".api.RemoteAction" />-->
 
     </application>
 
