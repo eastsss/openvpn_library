@@ -147,6 +147,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     private ProxyInfo mProxyInfo;
     private HandlerThread mCommandHandlerThread;
     private Handler mCommandHandler;
+    private static String state = "";
 
     // From: http://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
     public static String humanReadableByteCount(long bytes, boolean speed, Resources res) {
@@ -1424,5 +1425,11 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         mNotificationManager.notify(notificationId, notification);
     }
 
+    public static String getStatus() {//it will be call from mainactivity for get current status
+        return state;
+    }
 
+    public static void setDefaultStatus() {
+        state = "idle";
+    }
 }

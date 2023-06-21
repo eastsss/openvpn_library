@@ -45,10 +45,10 @@ public class OpenVPNThread implements Runnable {
     private OutputStream mOutputStream;
 
     private String[] mArgv;
-    private Process mProcess;
+    private static Process mProcess;
     private String mNativeDir;
     private String mTmpDir;
-    private OpenVPNService mService;
+    private static OpenVPNService mService;
     private String mDumpPath;
     private boolean mNoProcessExitStatus = false;
 
@@ -114,6 +114,13 @@ public class OpenVPNThread implements Runnable {
                 mService.openvpnStopped();
             Log.i(TAG, "Exiting");
         }
+    }
+
+    public static boolean stop() {
+        mService.openvpnStopped();
+        if (mProcess != null)
+            mProcess.destroy();
+        return true;
     }
 
     private void startOpenVPNThreadArgs(String[] argv) {

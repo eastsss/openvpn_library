@@ -171,6 +171,7 @@ dependencies {
 
     implementation("androidx.annotation:annotation:1.3.0")
     implementation("androidx.core:core:$coreVersion")
+    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.21")
     testImplementation("junit:junit:4.13.2")
