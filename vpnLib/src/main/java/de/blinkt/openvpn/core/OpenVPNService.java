@@ -69,6 +69,7 @@ import de.blinkt.openvpn.activities.DisconnectVPN;
 import de.blinkt.openvpn.api.ExternalAppDatabase;
 import de.blinkt.openvpn.core.VpnStatus.ByteCountListener;
 import de.blinkt.openvpn.core.VpnStatus.StateListener;
+import de.blinkt.openvpn.core.OpenVPNThreadv3;
 import openvpn.core.VariantConfig;
 
 public class OpenVPNService extends VpnService implements StateListener, Callback, ByteCountListener, IOpenVPNServiceInternal {
@@ -660,7 +661,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
         Runnable processThread;
         if (useOpenVPN3) {
-            OpenVPNManagement mOpenVPN3 = instantiateOpenVPN3Core();
+            OpenVPNManagement mOpenVPN3 = new OpenVPNThreadv3(this, mProfile);
             processThread = (Runnable) mOpenVPN3;
             mManagement = mOpenVPN3;
         } else {
@@ -723,17 +724,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
                 }
             }
         }
-    }
-
-    private OpenVPNManagement instantiateOpenVPN3Core() {
-        try {
-            Class<?> cl = Class.forName("de.blinkt.openvpn.core.OpenVPNThreadv3");
-            return (OpenVPNManagement) cl.getConstructor(OpenVPNService.class, VpnProfile.class).newInstance(this, mProfile);
-        } catch (IllegalArgumentException | InstantiationException | InvocationTargetException |
-                NoSuchMethodException | ClassNotFoundException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
 
