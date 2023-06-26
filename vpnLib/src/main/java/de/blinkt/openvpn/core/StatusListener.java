@@ -121,7 +121,7 @@ public class StatusListener implements VpnStatus.LogListener {
     };
     private Context mContext;
 
-    void init(Context c) {
+    public void init(Context c) {
 
         Intent intent = new Intent(c, OpenVPNStatusService.class);
         intent.setAction(OpenVPNService.START_SERVICE);
