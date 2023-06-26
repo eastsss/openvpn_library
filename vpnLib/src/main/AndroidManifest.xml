@@ -26,6 +26,7 @@
 
 
     <application
+        android:name=".core.ICSOpenVPNApplication"
         android:allowBackup="true"
         android:appCategory="productivity"
         android:extractNativeLibs="true"
