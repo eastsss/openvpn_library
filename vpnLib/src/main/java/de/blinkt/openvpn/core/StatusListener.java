@@ -96,17 +96,13 @@ public class StatusListener implements VpnStatus.LogListener {
                     pfd.close();
 
 
-                } else {
-                    VpnStatus.initLogCache(mCacheDir);
-                    /* Set up logging to Logcat with a context) */
-
-                    if (BuildConfig.DEBUG/* || BuildConfig.FLAVOR.equals("skeleton")*/) {
-                        VpnStatus.addLogListener(StatusListener.this);
-                    }
-
-
                 }
+                VpnStatus.initLogCache(mCacheDir);
+                /* Set up logging to Logcat with a context) */
 
+                if (BuildConfig.DEBUG/* || BuildConfig.FLAVOR.equals("skeleton")*/) {
+                    VpnStatus.addLogListener(StatusListener.this);
+                }
             } catch (RemoteException | IOException e) {
                 e.printStackTrace();
                 VpnStatus.logException(e);
