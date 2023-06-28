@@ -1,10 +1,13 @@
 package de.blinkt.openvpn;
 
 import android.annotation.TargetApi;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.VpnService;
 import android.os.Build;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.text.TextUtils;
 
@@ -15,13 +18,27 @@ import java.util.List;
 
 import de.blinkt.openvpn.core.ConfigParser;
 import de.blinkt.openvpn.core.ConnectionStatus;
-import de.blinkt.openvpn.core.OpenVPNThread;
 import de.blinkt.openvpn.core.ProfileManager;
 import de.blinkt.openvpn.core.VPNLaunchHelper;
 import de.blinkt.openvpn.core.VpnStatus;
+import de.blinkt.openvpn.core.IOpenVPNServiceInternal;
+import de.blinkt.openvpn.core.OpenVPNService;
 
 public class VPNManager implements VpnStatus.StateListener, VpnStatus.ByteCountListener {
     private OnVPNStatusChangeListener listener;
+
+    private IOpenVPNServiceInternal mService;
+    private final ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mService = IOpenVPNServiceInternal.Stub.asInterface(service);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mService = null;
+        }
+    };
 
     public VPNManager(Context context) {
         VpnStatus.initLogCache(context.getCacheDir());
@@ -37,8 +54,24 @@ public class VPNManager implements VpnStatus.StateListener, VpnStatus.ByteCountL
         return VpnService.prepare(context);
     }
 
+    public void bindVpnService(Context context) {
+        Intent intent = new Intent(context, OpenVPNService.class);
+        intent.setAction(OpenVPNService.START_SERVICE);
+        context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    public void unbindVpnService(Context context) {
+        context.unbindService(mConnection);
+    }
+
     public void disconnect() {
-        OpenVPNThread.stop();
+        if (mService != null) {
+            try {
+                mService.stopVPN(false);
+            } catch (RemoteException e) {
+                VpnStatus.logException(e);
+            }
+        }
     }
 
     public void connect(Context context, String config, String name, String username, String password, List<String> bypassPackages) {
