@@ -1,12 +1,8 @@
 package de.blinkt.openvpn.core;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
-import android.provider.Settings;
 import android.text.TextUtils;
 
 import net.openvpn.ovpn3.ClientAPI_Config;
@@ -14,12 +10,12 @@ import net.openvpn.ovpn3.ClientAPI_EvalConfig;
 import net.openvpn.ovpn3.ClientAPI_Event;
 import net.openvpn.ovpn3.ClientAPI_ExternalPKICertRequest;
 import net.openvpn.ovpn3.ClientAPI_ExternalPKISignRequest;
+import net.openvpn.ovpn3.ClientAPI_InterfaceStats;
 import net.openvpn.ovpn3.ClientAPI_LogInfo;
 import net.openvpn.ovpn3.ClientAPI_OpenVPNClient;
 import net.openvpn.ovpn3.ClientAPI_OpenVPNClientHelper;
 import net.openvpn.ovpn3.ClientAPI_ProvideCreds;
 import net.openvpn.ovpn3.ClientAPI_Status;
-import net.openvpn.ovpn3.ClientAPI_TransportStats;
 
 import java.util.Locale;
 
@@ -27,8 +23,6 @@ import de.blinkt.openvpn.R;
 import de.blinkt.openvpn.VpnProfile;
 
 import static de.blinkt.openvpn.VpnProfile.AUTH_RETRY_NOINTERACT;
-
-import androidx.annotation.NonNull;
 
 public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable, OpenVPNManagement {
     final static long EmulateExcludeRoutes = (1 << 16);
@@ -61,15 +55,12 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
         VpnStatus.logInfo(ClientAPI_OpenVPNClientHelper.platform());
         VpnStatus.logInfo(ClientAPI_OpenVPNClientHelper.copyright());
 
-        mHandler.postDelayed(this::pollStatus, OpenVPNManagement.mBytecountInterval * 1000);
-
         ClientAPI_Status status = connect();
         if (status.getError()) {
             VpnStatus.logError(String.format("connect() error: %s: %s", status.getStatus(), status.getMessage()));
             VpnStatus.addExtraHints(status.getMessage());
         }
         VpnStatus.updateStateString("NOPROCESS", "OpenVPN3 thread finished", R.string.state_noprocess, ConnectionStatus.LEVEL_NOTCONNECTED);
-        mHandler.removeCallbacks(this::pollStatus);
     }
 
     @Override
@@ -188,7 +179,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
         config.setPlatformVersion(mVp.getPlatformVersionEnvString());
         config.setExternalPkiAlias("extpki");
         config.setCompressionMode("asym");
-
+        config.setClockTickMS(1000);
 
         config.setHwAddrOverride(NetworkUtils.getFakeMacAddrFromSAAID(mService));
         config.setInfo(true);
@@ -374,8 +365,13 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
         });
     }
 
-    private void pollStatus() {
-        ClientAPI_TransportStats t = transport_stats();
+    @Override
+    public void clock_tick() {
+        pollStats();
+    }
+
+    private void pollStats() {
+        ClientAPI_InterfaceStats t = tun_stats();
         long in = t.getBytesIn();
         long out = t.getBytesOut();
         VpnStatus.updateByteCount(in, out);
