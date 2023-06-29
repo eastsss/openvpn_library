@@ -147,7 +147,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     private String mRemoteGW;
     private Handler guiHandler;
     private Toast mlastToast;
-    private Runnable mOpenVPNThread;
     private ProxyInfo mProxyInfo;
     private HandlerThread mCommandHandlerThread;
     private Handler mCommandHandler;
@@ -261,7 +260,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         unregisterDeviceStateReceiver(mDeviceStateReceiver);
         mDeviceStateReceiver = null;
         ProfileManager.setConntectedVpnProfileDisconnected(this);
-        mOpenVPNThread = null;
         if (!mStarting) {
             stopForeground(!mNotificationAlwaysVisible);
 
@@ -621,19 +619,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         VpnStatus.setConnectedVPNProfile(mProfile.getUUIDString());
         keepVPNAlive.scheduleKeepVPNAliveJobService(this, vp);
 
-        String nativeLibraryDirectory = getApplicationInfo().nativeLibraryDir;
-        String tmpDir;
-        try {
-            tmpDir = getApplication().getCacheDir().getCanonicalPath();
-        } catch (IOException e) {
-            e.printStackTrace();
-            tmpDir = "/tmp";
-        }
-
-        // Write OpenVPN binary
-        String[] argv = VPNLaunchHelper.buildOpenvpnArgv(this);
-
-
         // Set a flag that we are starting a new VPN
         mStarting = true;
         // Stop the previous session by interrupting the thread.
@@ -642,46 +627,13 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         // An old running VPN should now be exited
         mStarting = false;
 
-        // Start a new session by creating a new thread.
-        boolean useOpenVPN3 = VpnProfile.doUseOpenVPN3(this);
-
-        // Open the Management Interface
-        if (!useOpenVPN3) {
-            // start a Thread that handles incoming messages of the management socket
-            OpenVpnManagementThread ovpnManagementThread = new OpenVpnManagementThread(mProfile, this);
-            if (ovpnManagementThread.openManagementInterface(this)) {
-                Thread mSocketManagerThread = new Thread(ovpnManagementThread, "OpenVPNManagementThread");
-                mSocketManagerThread.start();
-                mManagement = ovpnManagementThread;
-                VpnStatus.logInfo("started Socket Thread");
-            } else {
-                endVpnService();
-                return;
-            }
-        }
-
-        Runnable processThread;
-        if (useOpenVPN3) {
-            OpenVPNManagement mOpenVPN3 = new OpenVPNThreadv3(this, mProfile);
-            processThread = (Runnable) mOpenVPN3;
-            mManagement = mOpenVPN3;
-        } else {
-            processThread = new OpenVPNThread(this, argv, nativeLibraryDirectory, tmpDir);
-        }
+        OpenVPNManagement mOpenVPN3 = new OpenVPNThreadv3(this, mProfile);
+        Runnable processThread = (Runnable) mOpenVPN3;
+        mManagement = mOpenVPN3;
 
         synchronized (mProcessLock) {
             mProcessThread = new Thread(processThread, "OpenVPNProcessThread");
             mProcessThread.start();
-        }
-
-        if (!useOpenVPN3) {
-            try {
-                mProfile.writeConfigFileOutput(this, ((OpenVPNThread) processThread).getOpenVPNStdin());
-            } catch (IOException | ExecutionException | InterruptedException e) {
-                VpnStatus.logException("Error generating config file", e);
-                endVpnService();
-                return;
-            }
         }
 
         final DeviceStateReceiver oldDeviceStateReceiver = mDeviceStateReceiver;
@@ -696,11 +648,8 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         });
     }
 
-
     private void stopOldOpenVPNProcess() {
         if (mManagement != null) {
-            if (mOpenVPNThread != null)
-                ((OpenVPNThread) mOpenVPNThread).setReplaceConnection();
             if (mManagement.stopVPN(true)) {
                 // an old was asked to exit, wait 1s
                 try {
@@ -1290,14 +1239,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public void setConnectedVPN(String uuid) {
-    }
-
-    private void doSendBroadcast(String state, ConnectionStatus level) {
-        Intent vpnstatus = new Intent();
-        vpnstatus.setAction("de.blinkt.openvpn.VPN_STATUS");
-        vpnstatus.putExtra("status", level.toString());
-        vpnstatus.putExtra("detailstatus", state);
-        sendBroadcast(vpnstatus, permission.ACCESS_NETWORK_STATE);
     }
 
     @Override
