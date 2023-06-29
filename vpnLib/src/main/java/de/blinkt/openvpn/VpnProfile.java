@@ -139,7 +139,7 @@ public class VpnProfile implements Serializable, Cloneable {
     public boolean mUseDefaultRoutev6 = true;
     public String mCustomRoutesv6 = "";
     public String mKeyPassword = "";
-    public boolean mPersistTun = false;
+    public boolean mPersistTun = true;
     public String mConnectRetryMax = "-1";
     public String mConnectRetry = "2";
     public String mConnectRetryMaxTime = "300";
@@ -283,7 +283,7 @@ public class VpnProfile implements Serializable, Cloneable {
         mUseDefaultRoutev6 = false;
         mExpectTLSCert = false;
         mCheckRemoteCN = false;
-        mPersistTun = false;
+        mPersistTun = true;
         mAllowLocalLAN = true;
         mPushPeerInfo = false;
         mMssFix = 0;

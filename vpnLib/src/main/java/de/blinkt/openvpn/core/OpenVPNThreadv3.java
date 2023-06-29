@@ -17,6 +17,7 @@ import net.openvpn.ovpn3.ClientAPI_OpenVPNClientHelper;
 import net.openvpn.ovpn3.ClientAPI_ProvideCreds;
 import net.openvpn.ovpn3.ClientAPI_Status;
 
+import java.util.Collection;
 import java.util.Locale;
 
 import de.blinkt.openvpn.R;
@@ -274,7 +275,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
     @Override
     public void networkChange(boolean sameNetwork) {
-        mHandler.post(() -> { reconnect(1);});
+        mHandler.post(() -> reconnect(1));
     }
 
     @Override
@@ -284,9 +285,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
     @Override
     public void sendCRResponse(String response) {
-        mHandler.post(() -> {
-            post_cc_msg("CR_RESPONSE," + response + "\n");
-        });
+        mHandler.post(() -> post_cc_msg("CR_RESPONSE," + response + "\n"));
     }
 
     @Override
@@ -328,8 +327,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
     public net.openvpn.ovpn3.ClientAPI_StringVec tun_builder_get_local_networks(boolean ipv6) {
 
         net.openvpn.ovpn3.ClientAPI_StringVec nets = new net.openvpn.ovpn3.ClientAPI_StringVec();
-        for (String net : NetworkUtils.getLocalNetworks(mService, ipv6))
-            nets.add(net);
+        nets.addAll(NetworkUtils.getLocalNetworks(mService, ipv6));
         return nets;
     }
 
@@ -353,16 +351,12 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
     @Override
     public void reconnect() {
-        mHandler.post(() -> {
-            reconnect(1);
-        });
+        mHandler.post(() -> reconnect(1));
     }
 
     @Override
     public void pause(pauseReason reason) {
-        mHandler.post(() -> {
-            super.pause(reason.toString());
-        });
+        mHandler.post(() -> super.pause(reason.toString()));
     }
 
     @Override

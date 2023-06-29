@@ -693,7 +693,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public void onDestroy() {
-        sendMessage("DISCONNECTED");
         synchronized (mProcessLock) {
             if (mProcessThread != null) {
                 mManagement.stopVPN(true);
@@ -1209,8 +1208,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         // If the process is not running, ignore any state,
         // Notification should be invisible in this state
 
-        //doSendBroadcast(state, level);
-        sendMessage(state);
         if (mProcessThread == null && !mNotificationAlwaysVisible)
             return;
 
@@ -1377,31 +1374,5 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         int notificationId = channel.hashCode();
 
         mNotificationManager.notify(notificationId, notification);
-    }
-
-    //sending message to main activity
-    private void sendMessage(String state) {
-        Intent intent = new Intent("connectionState");
-        intent.putExtra("state", state);
-        OpenVPNService.state = state;
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-    }
-
-    //sending message to main activity
-    private void sendMessage(String duration, String lastPacketReceive, String byteIn, String byteOut) {
-        Intent intent = new Intent("connectionState");
-        intent.putExtra("duration", duration);
-        intent.putExtra("lastPacketReceive", lastPacketReceive);
-        intent.putExtra("byteIn", byteIn);
-        intent.putExtra("byteOut", byteOut);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-    }
-
-    public static String getStatus() {//it will be call from mainactivity for get current status
-        return state;
-    }
-
-    public static void setDefaultStatus() {
-        state = "idle";
     }
 }
