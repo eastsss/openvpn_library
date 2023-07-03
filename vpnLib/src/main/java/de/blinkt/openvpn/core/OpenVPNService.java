@@ -9,14 +9,11 @@ import static de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTED;
 import static de.blinkt.openvpn.core.ConnectionStatus.LEVEL_WAITING_FOR_USER_INPUT;
 import static de.blinkt.openvpn.core.NetworkSpace.IpAddress;
 
-import android.Manifest.permission;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiModeManager;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -39,7 +36,6 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
-import android.os.PersistableBundle;
 import android.os.RemoteException;
 import android.system.OsConstants;
 import android.text.TextUtils;
@@ -49,9 +45,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Inet6Address;
@@ -61,7 +55,6 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Vector;
-import java.util.concurrent.ExecutionException;
 
 import de.blinkt.openvpn.LaunchVPN;
 import de.blinkt.openvpn.R;

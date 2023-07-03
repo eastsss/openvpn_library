@@ -112,7 +112,7 @@ public class VPNManager implements VpnStatus.StateListener, VpnStatus.ByteCountL
 
     @Override
     public void updateState(String state, String logmessage, int localizedResId, ConnectionStatus level, Intent Intent) {
-        listener.onVPNStateChanged(state);
+        listener.onVPNEventReceived(state);
     }
 
     @Override
