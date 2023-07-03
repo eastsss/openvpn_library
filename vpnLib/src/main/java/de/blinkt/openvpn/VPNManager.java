@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -112,7 +113,11 @@ public class VPNManager implements VpnStatus.StateListener, VpnStatus.ByteCountL
 
     @Override
     public void updateState(String state, String logmessage, int localizedResId, ConnectionStatus level, Intent Intent) {
-        listener.onVPNEventReceived(state);
+        try {
+            listener.onVPNEventReceived(VPNEvent.valueOf(state));
+        } catch(Exception e) {
+            Log.e("VPNManager", String.format("Invalid VPNEvent value %s", state));
+        }
     }
 
     @Override
