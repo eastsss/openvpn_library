@@ -12,5 +12,7 @@ public enum VPNEvent {
     DISCONNECTED,
     DISCONNECTING,
     RECONNECTING,
-    AUTH_FAILED
+    AUTH_FAILED,
+    PAUSE,
+    RESUME
 }

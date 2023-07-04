@@ -36,7 +36,7 @@ public class DeviceStateReceiver extends BroadcastReceiver implements ByteCountL
     private final long TRAFFIC_LIMIT = 64 * 1024;
 
     // Time to wait after network disconnect to pause the VPN
-    private final int DISCONNECT_WAIT = 20;
+    private final int DISCONNECT_WAIT = 10;
 
 
     connectState network = connectState.DISCONNECTED;
