@@ -24,7 +24,6 @@ import java.util.concurrent.Executors;
 
 import de.blinkt.openvpn.BuildConfig;
 import de.blinkt.openvpn.R;
-import de.blinkt.openvpn.api.AppRestrictions;
 
 public class ICSOpenVPNApplication extends Application {
     private StatusListener mStatus;
@@ -44,8 +43,6 @@ public class ICSOpenVPNApplication extends Application {
             createNotificationChannels();
         mStatus = new StatusListener();
         mStatus.init(getApplicationContext());
-
-        AppRestrictions.getInstance(this).checkRestrictions(this);
     }
 
     @Override

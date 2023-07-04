@@ -56,14 +56,10 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Vector;
 
-import de.blinkt.openvpn.LaunchVPN;
 import de.blinkt.openvpn.R;
 import de.blinkt.openvpn.VpnProfile;
-import de.blinkt.openvpn.activities.DisconnectVPN;
-import de.blinkt.openvpn.api.ExternalAppDatabase;
 import de.blinkt.openvpn.core.VpnStatus.ByteCountListener;
 import de.blinkt.openvpn.core.VpnStatus.StateListener;
-import de.blinkt.openvpn.core.OpenVPNThreadv3;
 import openvpn.core.VariantConfig;
 
 public class OpenVPNService extends VpnService implements StateListener, Callback, ByteCountListener, IOpenVPNServiceInternal {
@@ -119,17 +115,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         }
 
         @Override
-        public void addAllowedExternalApp(String packagename) throws RemoteException {
-            OpenVPNService.this.addAllowedExternalApp(packagename);
-        }
-
-        @Override
-        public boolean isAllowedExternalApp(String packagename) throws RemoteException {
-            return OpenVPNService.this.isAllowedExternalApp(packagename);
-
-        }
-
-        @Override
         public void challengeResponse(String repsonse) throws RemoteException {
             OpenVPNService.this.challengeResponse(repsonse);
         }
@@ -179,22 +164,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
                     return res.getString(R.string.volume_gbyte, bytesUnit);
 
             }
-    }
-
-
-
-    @Override
-    public void addAllowedExternalApp(String packagename) throws RemoteException {
-        ExternalAppDatabase extapps = new ExternalAppDatabase(OpenVPNService.this);
-        if(extapps.checkAllowingModifyingRemoteControl(this)) {
-            extapps.addApp(packagename);
-        }
-    }
-
-    @Override
-    public boolean isAllowedExternalApp(String packagename) throws RemoteException {
-        ExternalAppDatabase extapps = new ExternalAppDatabase(OpenVPNService.this);
-        return extapps.checkRemoteActionPermission(this, packagename);
     }
 
     @Override
@@ -419,7 +388,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     }
 
     private void addVpnActionsToNotification(Notification.Builder nbuilder) {
-        Intent disconnectVPN = new Intent(this, DisconnectVPN.class);
+        /*Intent disconnectVPN = new Intent(this, DisconnectVPN.class);
         disconnectVPN.setAction(DISCONNECT_VPN);
         PendingIntent disconnectPendingIntent = PendingIntent.getActivity(this, 0, disconnectVPN, PendingIntent.FLAG_IMMUTABLE);
 
@@ -438,17 +407,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
             PendingIntent resumeVPNPending = PendingIntent.getService(this, 0, pauseVPN, PendingIntent.FLAG_IMMUTABLE);
             nbuilder.addAction(R.drawable.ic_menu_play,
                     getString(R.string.resumevpn), resumeVPNPending);
-        }
-    }
-
-    PendingIntent getUserInputIntent(String needed) {
-        Intent intent = new Intent(getApplicationContext(), LaunchVPN.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        intent.putExtra("need", needed);
-        Bundle b = new Bundle();
-        b.putString("need", needed);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 12, intent, PendingIntent.FLAG_IMMUTABLE);
-        return pIntent;
+        }*/
     }
 
     PendingIntent getGraphPendingIntent() {

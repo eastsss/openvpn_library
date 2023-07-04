@@ -80,7 +80,6 @@ public class VpnProfile implements Serializable, Cloneable {
     public static final int TYPE_USERPASS_CERTIFICATES = 5;
     public static final int TYPE_USERPASS_PKCS12 = 6;
     public static final int TYPE_USERPASS_KEYSTORE = 7;
-    public static final int TYPE_EXTERNAL_APP = 8;
     public static final int X509_VERIFY_TLSREMOTE = 0;
     public static final int X509_VERIFY_TLSREMOTE_COMPAT_NOREMAPPING = 1;
     public static final int X509_VERIFY_TLSREMOTE_DN = 2;
@@ -500,31 +499,6 @@ public class VpnProfile implements Serializable, Cloneable {
             case VpnProfile.TYPE_USERPASS_KEYSTORE:
                 cfg.append("auth-user-pass\n");
             case VpnProfile.TYPE_KEYSTORE:
-            case VpnProfile.TYPE_EXTERNAL_APP:
-                if (!configForOvpn3) {
-                    String[] ks = getExternalCertificates(context);
-                    cfg.append("### From Keystore/ext auth app ####\n");
-                    if (ks != null) {
-                        if (!TextUtils.isEmpty(mCaFilename)) {
-                            cfg.append(insertFileData("ca", mCaFilename));
-                        } else if (!TextUtils.isEmpty(ks[0]) && !mCheckPeerFingerprint) {
-                            /* if we have enabled peer-fingerprint verification the certificate from
-                             * the keystore is more likely to screw things up than to fix anything
-                             */
-                            cfg.append("<ca>\n").append(ks[0]).append("\n</ca>\n");
-                        }
-                        if (!TextUtils.isEmpty(ks[1]))
-                            cfg.append("<extra-certs>\n").append(ks[1]).append("\n</extra-certs>\n");
-                        cfg.append("<cert>\n").append(ks[2]).append("\n</cert>\n");
-                        cfg.append("management-external-key nopadding pkcs1 pss digest\n");
-                    } else {
-                        cfg.append(context.getString(R.string.keychain_access)).append("\n");
-                        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.JELLY_BEAN)
-                            if (!mAlias.matches("^[a-zA-Z0-9]$"))
-                                cfg.append(context.getString(R.string.jelly_keystore_alphanumeric_bug)).append("\n");
-                    }
-                }
-                break;
             case VpnProfile.TYPE_USERPASS:
                 cfg.append("auth-user-pass\n");
                 if (!TextUtils.isEmpty(mCaFilename))
@@ -873,12 +847,6 @@ public class VpnProfile implements Serializable, Cloneable {
         return caChain;
     }
 
-    private X509Certificate[] getExtAppCertificates(Context context) throws KeyChainException {
-        if (mExternalAuthenticator == null || mAlias == null)
-            throw new KeyChainException("Alias or external auth provider name not set");
-        return ExtAuthHelper.getCertificateChain(context, mExternalAuthenticator, mAlias);
-    }
-
     public String[] getExternalCertificates(Context context) {
         return getExternalCertificates(context, 5);
     }
@@ -892,12 +860,8 @@ public class VpnProfile implements Serializable, Cloneable {
         try {
             String keystoreChain = null;
 
-            X509Certificate caChain[];
-            if (mAuthenticationType == TYPE_EXTERNAL_APP) {
-                caChain = getExtAppCertificates(context);
-            } else {
-                caChain = getKeyStoreCertificates(context);
-            }
+            X509Certificate caChain[] = getKeyStoreCertificates(context);
+
             if (caChain == null)
                 throw new NoCertReturnedException("No certificate returned from Keystore");
 
@@ -991,7 +955,7 @@ public class VpnProfile implements Serializable, Cloneable {
 
     //! Return an error if something is wrong
     public int checkProfile(Context context, boolean useOpenVPN3) {
-        if (mAuthenticationType == TYPE_KEYSTORE || mAuthenticationType == TYPE_USERPASS_KEYSTORE || mAuthenticationType == TYPE_EXTERNAL_APP) {
+        if (mAuthenticationType == TYPE_KEYSTORE || mAuthenticationType == TYPE_USERPASS_KEYSTORE) {
             if (mAlias == null)
                 return R.string.no_keystore_cert_selected;
         } else if (mAuthenticationType == TYPE_CERTIFICATES || mAuthenticationType == TYPE_USERPASS_CERTIFICATES) {
@@ -1190,12 +1154,7 @@ public class VpnProfile implements Serializable, Cloneable {
     @Nullable
     public String getSignedData(Context c, String b64data, OpenVPNManagement.SignaturePadding padding, String saltlen, String hashalg, boolean needDigest) {
         byte[] data = Base64.decode(b64data, Base64.DEFAULT);
-        byte[] signed_bytes;
-        if (mAuthenticationType == TYPE_EXTERNAL_APP) {
-            signed_bytes = getExtAppSignedData(c, data, padding, saltlen, hashalg, needDigest);
-        } else {
-            signed_bytes = getKeyChainSignedData(data, padding, saltlen, hashalg, needDigest);
-        }
+        byte[] signed_bytes = getKeyChainSignedData(data, padding, saltlen, hashalg, needDigest);
 
         if (signed_bytes != null)
             return Base64.encodeToString(signed_bytes, Base64.NO_WRAP);
@@ -1203,43 +1162,8 @@ public class VpnProfile implements Serializable, Cloneable {
             return null;
     }
 
-    private byte[] getExtAppSignedData(Context c, byte[] data, OpenVPNManagement.SignaturePadding padding, String saltlen, String hashalg, boolean needDigest)
-    {
-
-        Bundle extra = new Bundle();
-        RsaPaddingType paddingType;
-        switch (padding) {
-            case RSA_PKCS1_PADDING:
-                paddingType = RsaPaddingType.PKCS1_PADDING;
-                break;
-            case NO_PADDING:
-                paddingType = RsaPaddingType.NO_PADDING;
-                break;
-            case RSA_PKCS1_PSS_PADDING:
-                paddingType = RsaPaddingType.RSAPSS_PADDING;
-                break;
-            default:
-                paddingType = RsaPaddingType.NO_PADDING;
-        }
-
-        extra.putInt(EXTRA_RSA_PADDING_TYPE, paddingType.ordinal());
-        extra.putString(EXTRA_SALTLEN, saltlen);
-        extra.putString(EXTRA_DIGEST, hashalg);
-        extra.putBoolean(EXTRA_NEEDS_DIGEST, needDigest);
-
-        if (TextUtils.isEmpty(mExternalAuthenticator))
-            return null;
-        try {
-            return ExtAuthHelper.signData(c, mExternalAuthenticator, mAlias, data, extra);
-        } catch (KeyChainException | InterruptedException e) {
-            VpnStatus.logError(R.string.error_extapp_sign, mExternalAuthenticator, e.getClass().toString(), e.getLocalizedMessage());
-            return null;
-        }
-    }
-
     private byte[] getKeyChainSignedData(byte[] data, OpenVPNManagement.SignaturePadding padding, String saltlen, String hashalg, boolean needDigest) {
         PrivateKey privkey = getKeystoreKey();
-
 
         try {
             @SuppressLint("GetInstance")
