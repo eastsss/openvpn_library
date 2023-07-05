@@ -19,7 +19,6 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-import de.blinkt.openvpn.BuildConfig;
 import de.blinkt.openvpn.core.VpnStatus.LogLevel;
 
 import java.io.DataInputStream;

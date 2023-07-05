@@ -6,7 +6,6 @@
 package de.blinkt.openvpn.core;
 
 import android.os.Build;
-import de.blinkt.openvpn.BuildConfig;
 
 import java.security.InvalidKeyException;
 

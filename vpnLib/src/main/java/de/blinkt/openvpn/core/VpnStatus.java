@@ -68,10 +68,6 @@ public class VpnStatus {
 
     static final int MAXLOGENTRIES = 1000;
 
-    public static boolean isVPNActive() {
-        return mLastLevel != ConnectionStatus.LEVEL_AUTH_FAILED && !(mLastLevel == ConnectionStatus.LEVEL_NOTCONNECTED);
-    }
-
     public static String getLastCleanLogMessage(Context c) {
         String message = mLaststatemsg;
         switch (mLastLevel) {
@@ -308,21 +304,6 @@ public class VpnStatus {
 
     }
 
-    public static void updateStatePause(OpenVPNManagement.pauseReason pauseReason) {
-        switch (pauseReason) {
-            case noNetwork:
-                VpnStatus.updateStateString("NONETWORK", "", R.string.state_nonetwork, ConnectionStatus.LEVEL_NONETWORK);
-                break;
-            case screenOff:
-                VpnStatus.updateStateString("SCREENOFF", "", R.string.state_screenoff, ConnectionStatus.LEVEL_VPNPAUSED);
-                break;
-            case userPause:
-                VpnStatus.updateStateString("USERPAUSE", "", R.string.state_userpause, ConnectionStatus.LEVEL_VPNPAUSED);
-                break;
-        }
-
-    }
-
     private static ConnectionStatus getLevel(String state) {
         String[] noreplyet = {"CONNECTING", "WAIT", "RECONNECTING", "RESOLVE", "TCP_CONNECT"};
         String[] reply = {"AUTH", "GET_CONFIG", "ASSIGN_IP", "ADD_ROUTES", "AUTH_PENDING"};
@@ -502,12 +483,6 @@ public class VpnStatus {
     public static void logError(int resourceId, Object... args) {
         newLogItem(new LogItem(LogLevel.ERROR, resourceId, args));
     }
-
-    public static void logMessageOpenVPN(LogLevel level, int ovpnlevel, String message) {
-        /* Check for the weak md whe we have a message from OpenVPN */
-        newLogItem(new LogItem(level, ovpnlevel, message));
-    }
-
 
     public static void addExtraHints(String msg) {
         if ((msg.endsWith("md too weak") && msg.startsWith("OpenSSL: error")) || msg.contains("error:140AB18E")

@@ -63,7 +63,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     public static final String NOTIFICATION_CHANNEL_NEWSTATUS_ID = "openvpn_newstat";
 
     public static final String VPNSERVICE_TUN = "vpnservice-tun";
-    public final static String ORBOT_PACKAGE_NAME = "org.torproject.android";
     private static final String PAUSE_VPN = "de.blinkt.openvpn.PAUSE_VPN";
     private static final String RESUME_VPN = "de.blinkt.openvpn.RESUME_VPN";
     private static final int PRIORITY_MIN = -2;
@@ -601,9 +600,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         }
 
         if (mLocalIP != null) {
-            // OpenVPN3 manages excluded local networks by callback
-            if (!VpnProfile.doUseOpenVPN3(this))
-                addLocalNetworksToRoutes();
             try {
                 builder.addAddress(mLocalIP.mIp, mLocalIP.len);
             } catch (IllegalArgumentException iae) {
@@ -829,56 +825,16 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         builder.allowFamily(OsConstants.AF_INET6);
     }
 
-    private void addLocalNetworksToRoutes() {
-        for (String net : NetworkUtils.getLocalNetworks(this, false)) {
-            String[] netparts = net.split("/");
-            String ipAddr = netparts[0];
-            int netMask = Integer.parseInt(netparts[1]);
-            if (ipAddr.equals(mLocalIP.mIp))
-                continue;
-
-            if(mProfile.mAllowLocalLAN)
-                mRoutes.addIP(new CIDRIP(ipAddr, netMask), false);
-        }
-
-        if (mProfile.mAllowLocalLAN) {
-            for (String net : NetworkUtils.getLocalNetworks(this, true)) {
-                addRoutev6(net, false);
-            }
-        }
-    }
-
     private void setAllowedVpnPackages(Builder builder) {
-        boolean profileUsesOrBot = false;
-
-        for (Connection c : mProfile.mConnections) {
-            if (c.mProxyType == Connection.ProxyType.ORBOT)
-                profileUsesOrBot = true;
-        }
-
-        if (profileUsesOrBot)
-            VpnStatus.logDebug("VPN Profile uses at least one server entry with Orbot. Setting up VPN so that OrBot is not redirected over VPN.");
-
-
         boolean atLeastOneAllowedApp = false;
-
-        if (mProfile.mAllowedAppsVpnAreDisallowed && profileUsesOrBot) {
-            try {
-                builder.addDisallowedApplication(ORBOT_PACKAGE_NAME);
-            } catch (PackageManager.NameNotFoundException e) {
-                VpnStatus.logDebug("Orbot not installed?");
-            }
-        }
 
         for (String pkg : mProfile.mAllowedAppsVpn) {
             try {
                 if (mProfile.mAllowedAppsVpnAreDisallowed) {
                     builder.addDisallowedApplication(pkg);
                 } else {
-                    if (!(profileUsesOrBot && pkg.equals(ORBOT_PACKAGE_NAME))) {
-                        builder.addAllowedApplication(pkg);
-                        atLeastOneAllowedApp = true;
-                    }
+                    builder.addAllowedApplication(pkg);
+                    atLeastOneAllowedApp = true;
                 }
             } catch (PackageManager.NameNotFoundException e) {
                 mProfile.mAllowedAppsVpn.remove(pkg);

@@ -14,14 +14,11 @@ import android.net.NetworkInfo;
 import android.net.NetworkInfo.State;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 
 import de.blinkt.openvpn.R;
 import de.blinkt.openvpn.core.VpnStatus.ByteCountListener;
 
 import java.util.LinkedList;
-import java.util.Objects;
-import java.util.StringTokenizer;
 
 import static de.blinkt.openvpn.core.OpenVPNManagement.pauseReason;
 

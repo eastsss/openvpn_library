@@ -128,7 +128,6 @@ public class ConfigParser {
 
     private HashMap<String, Vector<Vector<String>>> options = new HashMap<>();
     private HashMap<String, Vector<String>> meta = new HashMap<String, Vector<String>>();
-    private String auth_user_pass_file;
 
     static public void useEmbbedUserAuth(VpnProfile np, String inlinedata) {
         String data = VpnProfile.getEmbeddedContent(inlinedata);
@@ -243,10 +242,6 @@ public class ConfigParser {
             args.add(inlinefile);
         }
 
-    }
-
-    public String getAuthUserPassFile() {
-        return auth_user_pass_file;
     }
 
     private boolean space(char c) {
@@ -722,8 +717,6 @@ public class ConfigParser {
                 np.mAuthenticationType = VpnProfile.TYPE_USERPASS_KEYSTORE;
             }
             if (authuser.size() > 1) {
-                if (!authuser.get(1).startsWith(VpnProfile.INLINE_TAG))
-                    auth_user_pass_file = authuser.get(1);
                 np.mUsername = null;
                 useEmbbedUserAuth(np, authuser.get(1));
             }

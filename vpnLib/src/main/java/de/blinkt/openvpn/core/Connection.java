@@ -30,8 +30,7 @@ public class Connection implements Serializable, Cloneable {
     public enum ProxyType {
         NONE,
         HTTP,
-        SOCKS5,
-        ORBOT
+        SOCKS5
     }
 
     private static final long serialVersionUID = 92031902903829089L;

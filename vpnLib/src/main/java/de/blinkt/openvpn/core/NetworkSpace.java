@@ -11,7 +11,6 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
-import java.lang.annotation.Target;
 import java.math.BigInteger;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -258,13 +257,6 @@ public class NetworkSpace {
     void addIP(CIDRIP cidrIp, boolean include) {
 
         mIpAddresses.add(new IpAddress(cidrIp, include));
-    }
-
-    public void addIPSplit(CIDRIP cidrIp, boolean include) {
-        IpAddress newIP = new IpAddress(cidrIp, include);
-        IpAddress[] splitIps = newIP.split();
-        for (IpAddress split : splitIps)
-            mIpAddresses.add(split);
     }
 
     void addIPv6(Inet6Address address, int mask, boolean included) {

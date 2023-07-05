@@ -10,7 +10,6 @@ import android.os.Parcelable;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Vector;
 
 import static java.lang.Math.max;
 
@@ -105,13 +104,6 @@ public class TrafficHistory implements Parcelable {
         return new LinkedList<>(trafficHistorySeconds);
     }
 
-    public static LinkedList<TrafficDatapoint> getDummyList() {
-        LinkedList<TrafficDatapoint> list = new LinkedList<>();
-        list.add(new TrafficDatapoint(0, 0, System.currentTimeMillis()));
-        return list;
-    }
-
-
     public static class TrafficDatapoint implements Parcelable {
         private TrafficDatapoint(long inBytes, long outBytes, long timestamp) {
             this.in = inBytes;
@@ -175,7 +167,6 @@ public class TrafficHistory implements Parcelable {
 
     private void removeAndAverage(TrafficDatapoint newTdp, boolean seconds) {
         HashSet<TrafficDatapoint> toRemove = new HashSet<>();
-        Vector<TrafficDatapoint> toAverage = new Vector<>();
 
         long timePeriod;
         LinkedList<TrafficDatapoint> tpList, nextList;

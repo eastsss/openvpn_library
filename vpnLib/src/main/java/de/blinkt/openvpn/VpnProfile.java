@@ -12,7 +12,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.security.KeyChain;
 import android.security.KeyChainException;
@@ -31,20 +30,14 @@ import org.spongycastle.util.io.pem.PemWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 import java.util.Collection;
@@ -59,19 +52,10 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 public class VpnProfile implements Serializable, Cloneable {
-    // Note that this class cannot be moved to core where it belongs since
-    // the profile loading depends on it being here
-    // The Serializable documentation mentions that class name change are possible
-    // but the how is unclear
-    //
-    transient public static final long MAX_EMBED_FILE_SIZE = 2048 * 1024; // 2048kB
-    // Don't change this, not all parts of the program use this constant
-    public static final String EXTRA_PROFILEUUID = "de.blinkt.openvpn.profileUUID";
     public static final String INLINE_TAG = "[[INLINE]]";
     public static final String DISPLAYNAME_TAG = "[[NAME]]";
     public static final int MAXLOGLEVEL = 4;
     public static final int CURRENT_PROFILE_VERSION = 10;
-    public static final int DEFAULT_MSSFIX_SIZE = 1280;
     public static final int TYPE_CERTIFICATES = 0;
     public static final int TYPE_PKCS12 = 1;
     public static final int TYPE_KEYSTORE = 2;
@@ -89,18 +73,8 @@ public class VpnProfile implements Serializable, Cloneable {
     public static final int AUTH_RETRY_NOINTERACT = 2;
     public static final boolean mIsOpenVPN22 = false;
     private static final long serialVersionUID = 7085688938959334563L;
-    private static final int AUTH_RETRY_NONE_KEEP = 1;
-    private static final int AUTH_RETRY_INTERACT = 3;
-    private static final String EXTRA_RSA_PADDING_TYPE = "de.blinkt.openvpn.api.RSA_PADDING_TYPE";
-    private static final String EXTRA_SALTLEN = "de.blinkt.openvpn.api.SALTLEN";
-    private static final String EXTRA_NEEDS_DIGEST = "de.blinkt.openvpn.api.NEEDS_DIGEST";
-    private static final String EXTRA_DIGEST = "de.blinkt.openvpn.api.DIGEST";
     public static String DEFAULT_DNS1 = "9.9.9.9";
     public static String DEFAULT_DNS2 = "2620:fe::fe";
-    // variable named wrong and should haven beeen transient
-    // but needs to keep wrong name to guarante loading of old
-    // profiles
-    public transient boolean profileDeleted = false;
     public int mAuthenticationType = TYPE_KEYSTORE;
     public String mName;
     public String mAlias;
@@ -148,7 +122,6 @@ public class VpnProfile implements Serializable, Cloneable {
     public String mx509UsernameField = null;
     public boolean mAllowLocalLAN;
     public String mExcludedRoutes;
-    public String mExcludedRoutesv6;
     public int mMssFix = 0; // -1 is default,
     public Connection[] mConnections = new Connection[0];
     public boolean mRemoteRandom = false;
@@ -157,14 +130,12 @@ public class VpnProfile implements Serializable, Cloneable {
     public boolean mAllowAppVpnBypass = false;
     public String mCrlFilename;
     public String mProfileCreator;
-    public String mExternalAuthenticator;
     public int mAuthRetry = AUTH_RETRY_NONE_FORGET;
     public int mTunMtu;
     public boolean mPushPeerInfo = false;
     public int mVersion = 0;
     // timestamp when the profile was last used
     public long mLastUsed;
-    public String importedProfileHash;
     /* Options no longer used in new profiles */
     public String mServerName = "openvpn.example.com";
     public String mServerPort = "1194";
@@ -209,14 +180,6 @@ public class VpnProfile implements Serializable, Cloneable {
             return '"' + escapedString + '"';
     }
 
-    public static boolean doUseOpenVPN3(Context c) {
-        SharedPreferences prefs = Preferences.getDefaultSharedPreferences(c);
-        boolean useOpenVPN3 = prefs.getBoolean("ovpn3", false);
-        //if (!BuildConfig.openvpn3)
-            useOpenVPN3 = true;
-        return useOpenVPN3;
-    }
-
     //! Put inline data inline and other data as normal escaped filename
     public static String insertFileData(String cfgentry, String filedata) {
         if (filedata == null) {
@@ -227,12 +190,6 @@ public class VpnProfile implements Serializable, Cloneable {
         } else {
             return String.format(Locale.ENGLISH, "%s %s\n", cfgentry, openVpnEscape(filedata));
         }
-    }
-
-    public static String getDisplayName(String embeddedFile) {
-        int start = DISPLAYNAME_TAG.length();
-        int end = embeddedFile.indexOf(INLINE_TAG);
-        return embeddedFile.substring(start, end);
     }
 
     public static String getEmbeddedContent(String data) {
@@ -292,11 +249,6 @@ public class VpnProfile implements Serializable, Cloneable {
     public UUID getUUID() {
         return mUuid;
 
-    }
-
-    // Only used for the special case of managed profiles
-    public void setUUID(UUID uuid) {
-        mUuid = uuid;
     }
 
     public String getName() {
@@ -783,13 +735,6 @@ public class VpnProfile implements Serializable, Cloneable {
         return parts[0] + "  " + netmask;
     }
 
-    public void writeConfigFileOutput(Context context, OutputStream out) throws IOException {
-        OutputStreamWriter cfg = new OutputStreamWriter(out);
-        cfg.write(getConfigFile(context, false));
-        cfg.flush();
-        cfg.close();
-    }
-
     public Intent getStartServiceIntent(Context context, String startReason) {
         String prefix = context.getPackageName();
 
@@ -835,16 +780,9 @@ public class VpnProfile implements Serializable, Cloneable {
         }
     }
 
-    public void pwDidFail(Context c) {
-
-    }
-
     private X509Certificate[] getKeyStoreCertificates(Context context) throws KeyChainException, InterruptedException {
         mPrivateKey = KeyChain.getPrivateKey(context, mAlias);
-
-
-        X509Certificate[] caChain = KeyChain.getCertificateChain(context, mAlias);
-        return caChain;
+        return KeyChain.getCertificateChain(context, mAlias);
     }
 
     public String[] getExternalCertificates(Context context) {
@@ -950,7 +888,7 @@ public class VpnProfile implements Serializable, Cloneable {
     }
 
     public int checkProfile(Context c) {
-        return checkProfile(c, doUseOpenVPN3(c));
+        return checkProfile(c, true);
     }
 
     //! Return an error if something is wrong
@@ -1003,16 +941,8 @@ public class VpnProfile implements Serializable, Cloneable {
                 return R.string.openvpn3_pkcs12;
             }
             for (Connection conn : mConnections) {
-                if (conn.mProxyType == Connection.ProxyType.ORBOT || conn.mProxyType == Connection.ProxyType.SOCKS5)
+                if (conn.mProxyType == Connection.ProxyType.SOCKS5)
                     return R.string.openvpn3_socksproxy;
-            }
-        }
-        for (Connection c : mConnections) {
-            if (c.mProxyType == Connection.ProxyType.ORBOT) {
-                if (usesExtraProxyOptions())
-                    return R.string.error_orbot_and_proxy_options;
-                if (!OrbotHelper.checkTorReceier(context))
-                    return R.string.no_orbotfound;
             }
         }
 
@@ -1070,62 +1000,6 @@ public class VpnProfile implements Serializable, Cloneable {
                 return false;
 
         }
-    }
-
-    public boolean requireTLSKeyPassword() {
-        if (TextUtils.isEmpty(mClientKeyFilename))
-            return false;
-
-        String data = "";
-        if (isEmbedded(mClientKeyFilename))
-            data = mClientKeyFilename;
-        else {
-            char[] buf = new char[2048];
-            FileReader fr;
-            try {
-                fr = new FileReader(mClientKeyFilename);
-                int len = fr.read(buf);
-                while (len > 0) {
-                    data += new String(buf, 0, len);
-                    len = fr.read(buf);
-                }
-                fr.close();
-            } catch (FileNotFoundException e) {
-                return false;
-            } catch (IOException e) {
-                return false;
-            }
-
-        }
-
-        if (data.contains("Proc-Type: 4,ENCRYPTED"))
-            return true;
-        else if (data.contains("-----BEGIN ENCRYPTED PRIVATE KEY-----"))
-            return true;
-        else
-            return false;
-    }
-
-    public int needUserPWInput(String transientCertOrPkcs12PW, String mTransientAuthPW) {
-        if ((mAuthenticationType == TYPE_PKCS12 || mAuthenticationType == TYPE_USERPASS_PKCS12) &&
-                (mPKCS12Password == null || mPKCS12Password.equals(""))) {
-            if (transientCertOrPkcs12PW == null)
-                return R.string.pkcs12_file_encryption_key;
-        }
-
-        if (mAuthenticationType == TYPE_CERTIFICATES || mAuthenticationType == TYPE_USERPASS_CERTIFICATES) {
-            if (requireTLSKeyPassword() && TextUtils.isEmpty(mKeyPassword))
-                if (transientCertOrPkcs12PW == null) {
-                    return R.string.private_key_password;
-                }
-        }
-
-        if (isUserPWAuth() &&
-                (TextUtils.isEmpty(mUsername) ||
-                        (TextUtils.isEmpty(mPassword) && mTransientAuthPW == null))) {
-            return R.string.password;
-        }
-        return 0;
     }
 
     public String getPasswordAuth() {
@@ -1292,15 +1166,6 @@ public class VpnProfile implements Serializable, Cloneable {
                 return true;
 
         return false;
-    }
-
-    /**
-     * The order of elements is important!
-     */
-    private enum RsaPaddingType {
-        NO_PADDING,
-        PKCS1_PADDING,
-        RSAPSS_PADDING
     }
 
     static class NoCertReturnedException extends Exception {

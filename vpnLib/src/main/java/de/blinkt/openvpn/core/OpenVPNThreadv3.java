@@ -17,7 +17,6 @@ import net.openvpn.ovpn3.ClientAPI_OpenVPNClientHelper;
 import net.openvpn.ovpn3.ClientAPI_ProvideCreds;
 import net.openvpn.ovpn3.ClientAPI_Status;
 
-import java.util.Collection;
 import java.util.Locale;
 
 import de.blinkt.openvpn.R;
