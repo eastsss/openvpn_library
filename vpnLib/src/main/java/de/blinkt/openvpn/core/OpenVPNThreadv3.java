@@ -303,12 +303,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
         String name = event.getName();
         String info = event.getInfo();
         if (name.equals("INFO")) {
-            if (info.startsWith("OPEN_URL:") || info.startsWith("CR_TEXT:")
-                || info.startsWith("WEB_AUTH:")) {
-                mService.trigger_sso(info);
-            } else {
-                VpnStatus.logInfo(R.string.info_from_server, info);
-            }
+            VpnStatus.logInfo(R.string.info_from_server, info);
         } else if (name.equals("COMPRESSION_ENABLED") || name.equals(("WARN"))) {
             VpnStatus.logInfo(String.format(Locale.US, "%s: %s", name, info));
         } else {
