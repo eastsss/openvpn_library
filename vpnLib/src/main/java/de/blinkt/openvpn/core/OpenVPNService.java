@@ -241,7 +241,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
             PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
             nbuilder.setContentIntent(pIntent);
         } else {
-            nbuilder.setContentIntent(getGraphPendingIntent());
+            nbuilder.setContentIntent(getMainActivityPendingIntent());
         }
 
         if (when != 0)
@@ -279,11 +279,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         nbuilder.setLocalOnly(true);
     }
 
-    private boolean runningOnAndroidTV() {
-        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        return uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
-    }
-
     private int getIconByConnectionStatus(ConnectionStatus level) {
         switch (level) {
             case LEVEL_CONNECTED:
@@ -313,17 +308,15 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     }
 
-    PendingIntent getGraphPendingIntent() {
+    PendingIntent getMainActivityPendingIntent() {
         // Let the configure Button show the Log
         Intent intent = new Intent();
-        intent.setComponent(new ComponentName(this, getPackageName() + ".activities.MainActivity"));
+        ComponentName componentName = new ComponentName(this, getPackageName() + ".MainActivity");
+        intent.setComponent(componentName);
 
-        intent.putExtra("PAGE", "graph");
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent startLW = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         return startLW;
-
     }
 
     synchronized void registerDeviceStateReceiver(DeviceStateReceiver newDeviceStateReceiver) {
@@ -729,7 +722,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         mDomain = null;
         mProxyInfo = null;
 
-        builder.setConfigureIntent(getGraphPendingIntent());
+        builder.setConfigureIntent(getMainActivityPendingIntent());
 
         try {
             //Debug.stopMethodTracing();
@@ -956,8 +949,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
             if (level == LEVEL_CONNECTED) {
                 mDisplayBytecount = true;
                 mConnecttime = System.currentTimeMillis();
-                if (!runningOnAndroidTV())
-                    channel = NOTIFICATION_CHANNEL_BG_ID;
+                channel = NOTIFICATION_CHANNEL_BG_ID;
             } else {
                 mDisplayBytecount = false;
             }
