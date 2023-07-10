@@ -57,7 +57,6 @@ android {
 
     sourceSets {
         getByName("main") {
-            assets.srcDirs("build/ovpnassets")
             aidl.srcDir("src/main/aidl")
         }
 
