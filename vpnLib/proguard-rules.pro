@@ -1,0 +1,2 @@
+-keep class de.blinkt.openvpn.core.** { *; }
+-keep class net.openvpn.ovpn3.** { *; }
