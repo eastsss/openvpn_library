@@ -63,6 +63,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     public static final String NOTIFICATION_CHANNEL_NEWSTATUS_ID = "openvpn_newstat";
 
     public static final String VPNSERVICE_TUN = "vpnservice-tun";
+    private static final String TAG = "OpenVPNService";
     private static final String PAUSE_VPN = "de.blinkt.openvpn.PAUSE_VPN";
     private static final String RESUME_VPN = "de.blinkt.openvpn.RESUME_VPN";
     private static final int PRIORITY_MIN = -2;
@@ -168,6 +169,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public void onRevoke() {
+        Log.i(TAG, "onRevoke called");
         VpnStatus.logError(R.string.permission_revoked);
         mManagement.stopVPN(false);
         endVpnService();
@@ -193,6 +195,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
 
     private void endVpnService() {
+        Log.i(TAG, "endVpnService called");
         if (!isVpnAlwaysOnEnabled() && !isAlwaysActiveEnabled()) {
             /* if we should be an always on VPN, keep the timer running */
             keepVPNAlive.unscheduleKeepVPNAliveJobService(this);
@@ -216,6 +219,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     private void showNotification(final String msg, String tickerText, @NonNull String channel,
                                   long when, ConnectionStatus status, Intent intent) {
+        Log.i(TAG, "showNotification called, msg = " + msg + ", channel = " + channel);
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         int icon = getIconByConnectionStatus(status);
 
@@ -361,6 +365,12 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "onStartCommand called");
+        if (intent != null) {
+            Log.i(TAG, "intent = " + intent.toString());
+        } else {
+            Log.i(TAG, "intent is null");
+        }
         if (intent != null && intent.getBooleanExtra(ALWAYS_SHOW_NOTIFICATION, false))
             mNotificationAlwaysVisible = true;
 
@@ -413,8 +423,10 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     private VpnProfile fetchVPNProfile(Intent intent)
     {
+        Log.i(TAG, "fetchVPNProfile called");
         String startReason;
         if (intent != null && intent.hasExtra(getPackageName() + ".profileUUID")) {
+            Log.i(TAG, "ProfileManager.get() called");
             String profileUUID = intent.getStringExtra(getPackageName() + ".profileUUID");
             int profileVersion = intent.getIntExtra(getPackageName() + ".profileVersion", 0);
             startReason = intent.getStringExtra(getPackageName() + ".startReason");
@@ -427,6 +439,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
             }
 
         } else {
+            Log.i(TAG, "ProfileManager.getLastConnectedProfile() called");
             /* The intent is null when we are set as always-on or the service has been restarted. */
             mProfile = ProfileManager.getLastConnectedProfile(this);
             startReason = "Using last connected profile (started with null intent, always-on or restart after crash)";
@@ -436,7 +449,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
             if (mProfile == null) {
                 startReason = "could not get last connected profile, using default (started with null intent, always-on or restart after crash)";
 
-                Log.d("OpenVPN", "Got no last connected profile on null intent. Assuming always on.");
+                Log.i(TAG, "Got no last connected profile on null intent. Assuming always on.");
                 mProfile = ProfileManager.getAlwaysOnVPN(this);
 
 
@@ -455,8 +468,10 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     }
 
     private void startOpenVPN(Intent intent, int startId) {
+        Log.i(TAG, "startOpenVPN called");
         VpnProfile vp = fetchVPNProfile(intent);
         if (vp == null) {
+            Log.i(TAG, "profile is null, stopping self");
             stopSelf(startId);
             return;
         }
@@ -495,6 +510,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     }
 
     private void stopOldOpenVPNProcess() {
+        Log.i(TAG, "stopOldOpenVPNProcess called");
         if (mManagement != null) {
             if (mManagement.stopVPN(true)) {
                 // an old was asked to exit, wait 1s
@@ -510,6 +526,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     }
 
     public void forceStopOpenVpnProcess() {
+        Log.i(TAG, "forceStopOpenVpnProcess called");
         synchronized (mProcessLock) {
             if (mProcessThread != null) {
                 mProcessThread.interrupt();
@@ -531,6 +548,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.i(TAG, "onCreate called");
         guiHandler = new Handler(getMainLooper());
         mCommandHandlerThread = new HandlerThread("OpenVPNServiceCommandThread");
         mCommandHandlerThread.start();
@@ -539,6 +557,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public void onDestroy() {
+        Log.i(TAG, "onDestroy called");
         synchronized (mProcessLock) {
             if (mProcessThread != null) {
                 mManagement.stopVPN(true);
@@ -555,6 +574,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
     }
 
     public ParcelFileDescriptor openTun() {
+        Log.i(TAG, "openTun called");
 
         //Debug.startMethodTracing(getExternalFilesDir(null).toString() + "/opentun.trace", 40* 1024 * 1024);
 
@@ -936,6 +956,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public void updateState(String state, String logmessage, int resid, ConnectionStatus level, Intent intent) {
+        Log.i(TAG, "updateState called, state = " + state);
         // If the process is not running, ignore any state,
         // Notification should be invisible in this state
 
@@ -970,6 +991,7 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
 
     @Override
     public void updateByteCount(long in, long out, long diffIn, long diffOut) {
+        Log.i(TAG, String.format("updateByteCount called, in = %d, out = %d", in, out));
         if (mDisplayBytecount) {
             String netstat = String.format(getString(R.string.statusline_bytecount),
                     humanReadableByteCount(in, false, getResources()),
