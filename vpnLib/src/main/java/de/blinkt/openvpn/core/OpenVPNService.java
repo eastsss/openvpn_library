@@ -58,17 +58,13 @@ import de.blinkt.openvpn.core.VpnStatus.StateListener;
 public class OpenVPNService extends VpnService implements StateListener, Callback, ByteCountListener, IOpenVPNServiceInternal {
     public static final String START_SERVICE = "de.blinkt.openvpn.START_SERVICE";
     public static final String START_SERVICE_STICKY = "de.blinkt.openvpn.START_SERVICE_STICKY";
-    public static final String ALWAYS_SHOW_NOTIFICATION = "de.blinkt.openvpn.NOTIFICATION_ALWAYS_VISIBLE";
     public static final String NOTIFICATION_CHANNEL_BG_ID = "openvpn_bg";
     public static final String NOTIFICATION_CHANNEL_NEWSTATUS_ID = "openvpn_newstat";
 
     public static final String VPNSERVICE_TUN = "vpnservice-tun";
     private static final String TAG = "OpenVPNService";
-    private static final String PAUSE_VPN = "de.blinkt.openvpn.PAUSE_VPN";
-    private static final String RESUME_VPN = "de.blinkt.openvpn.RESUME_VPN";
     private static final int PRIORITY_MIN = -2;
     private static final int PRIORITY_DEFAULT = 0;
-    private static boolean mNotificationAlwaysVisible = false;
     private final Vector<String> mDnslist = new Vector<>();
     private final NetworkSpace mRoutes = new NetworkSpace();
     private final NetworkSpace mRoutesv6 = new NetworkSpace();
@@ -208,12 +204,9 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         mDeviceStateReceiver = null;
         ProfileManager.setConntectedVpnProfileDisconnected(this);
         if (!mStarting) {
-            stopForeground(!mNotificationAlwaysVisible);
-
-            if (!mNotificationAlwaysVisible) {
-                stopSelf();
-                VpnStatus.removeStateListener(this);
-            }
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+            VpnStatus.removeStateListener(this);
         }
     }
 
@@ -371,24 +364,9 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         } else {
             Log.i(TAG, "intent is null");
         }
-        if (intent != null && intent.getBooleanExtra(ALWAYS_SHOW_NOTIFICATION, false))
-            mNotificationAlwaysVisible = true;
 
         VpnStatus.addStateListener(this);
         VpnStatus.addByteCountListener(this);
-
-        if (intent != null && PAUSE_VPN.equals(intent.getAction())) {
-            if (mDeviceStateReceiver != null)
-                mDeviceStateReceiver.userPause(true);
-            return START_NOT_STICKY;
-        }
-
-        if (intent != null && RESUME_VPN.equals(intent.getAction())) {
-            if (mDeviceStateReceiver != null)
-                mDeviceStateReceiver.userPause(false);
-            return START_NOT_STICKY;
-        }
-
 
         if (intent != null && START_SERVICE.equals(intent.getAction()))
             return START_NOT_STICKY;
@@ -428,12 +406,11 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         if (intent != null && intent.hasExtra(getPackageName() + ".profileUUID")) {
             Log.i(TAG, "ProfileManager.get() called");
             String profileUUID = intent.getStringExtra(getPackageName() + ".profileUUID");
-            int profileVersion = intent.getIntExtra(getPackageName() + ".profileVersion", 0);
             startReason = intent.getStringExtra(getPackageName() + ".startReason");
             if (startReason == null)
                 startReason = "(unknown)";
             // Try for 10s to get current version of the profile
-            mProfile = ProfileManager.get(this, profileUUID, profileVersion, 100);
+            mProfile = ProfileManager.get(this, profileUUID);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 updateShortCutUsage(mProfile);
             }
@@ -959,9 +936,6 @@ public class OpenVPNService extends VpnService implements StateListener, Callbac
         Log.i(TAG, "updateState called, state = " + state);
         // If the process is not running, ignore any state,
         // Notification should be invisible in this state
-
-        if (mProcessThread == null && !mNotificationAlwaysVisible)
-            return;
 
         String channel = NOTIFICATION_CHANNEL_NEWSTATUS_ID;
         // Display byte count only after being connected

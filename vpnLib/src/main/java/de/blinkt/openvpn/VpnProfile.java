@@ -28,8 +28,6 @@ import org.spongycastle.util.io.pem.PemObject;
 import org.spongycastle.util.io.pem.PemWriter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -133,9 +131,7 @@ public class VpnProfile implements Serializable, Cloneable {
     public int mAuthRetry = AUTH_RETRY_NONE_FORGET;
     public int mTunMtu;
     public boolean mPushPeerInfo = false;
-    public int mVersion = 0;
     // timestamp when the profile was last used
-    public long mLastUsed;
     /* Options no longer used in new profiles */
     public String mServerName = "openvpn.example.com";
     public String mServerPort = "1194";
@@ -162,7 +158,6 @@ public class VpnProfile implements Serializable, Cloneable {
 
         mConnections = new Connection[1];
         mConnections[0] = new Connection();
-        mLastUsed = System.currentTimeMillis();
     }
 
     public static String openVpnEscape(String unescaped) {
@@ -740,7 +735,6 @@ public class VpnProfile implements Serializable, Cloneable {
 
         Intent intent = new Intent(context, OpenVPNService.class);
         intent.putExtra(prefix + ".profileUUID", mUuid.toString());
-        intent.putExtra(prefix + ".profileVersion", mVersion);
         if (startReason != null)
             intent.putExtra(prefix + ".startReason", startReason);
         return intent;

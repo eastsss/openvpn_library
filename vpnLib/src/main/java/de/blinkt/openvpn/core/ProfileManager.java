@@ -19,19 +19,15 @@ import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 import de.blinkt.openvpn.VpnProfile;
 
 public class ProfileManager {
     private static final String PREFS_NAME = "VPNList";
-
     private static final String LAST_CONNECTED_PROFILE = "lastConnectedProfile";
     private static final String TEMPORARY_PROFILE_FILENAME = "temporary-vpn-profile";
     private static ProfileManager instance;
-
-    private static VpnProfile mLastConnectedVpn = null;
     private static VpnProfile tmpprofile = null;
     private HashMap<String, VpnProfile> profiles = new HashMap<>();
 
@@ -70,7 +66,6 @@ public class ProfileManager {
 
         prefsedit.putString(LAST_CONNECTED_PROFILE, connectedProfile.getUUIDString());
         prefsedit.apply();
-        mLastConnectedVpn = connectedProfile;
     }
 
     /**
@@ -93,20 +88,12 @@ public class ProfileManager {
     }
 
     public static void saveProfile(Context context, VpnProfile profile) {
-        profile.mVersion += 1;
         ObjectOutputStream vpnFile;
 
         String filename = profile.getUUID().toString();
 
         if (profile.mTemporaryProfile)
             filename = TEMPORARY_PROFILE_FILENAME;
-
-        File encryptedFileOld = context.getFileStreamPath(filename + ".cpold");
-
-        if (encryptedFileOld.exists())
-        {
-            encryptedFileOld.delete();
-        }
 
         String deleteIfExists;
         try {
@@ -134,31 +121,8 @@ public class ProfileManager {
     }
 
     public static VpnProfile get(Context context, String profileUUID) {
-        return get(context, profileUUID, 0, 10);
-    }
-
-    public static VpnProfile get(Context context, String profileUUID, int version, int tries) {
         checkInstance(context);
-        VpnProfile profile = get(profileUUID);
-        int tried = 0;
-        while ((profile == null || profile.mVersion < version) && (tried++ < tries)) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-            }
-            instance.loadVPNList(context);
-            profile = get(profileUUID);
-        }
-
-        if (tried > 5) {
-            int ver = profile == null ? -1 : profile.mVersion;
-            VpnStatus.logError(String.format(Locale.US, "Used x %d tries to get current version (%d/%d) of the profile", tried, ver, version));
-        }
-        return profile;
-    }
-
-    public static VpnProfile getLastConnectedVpn() {
-        return mLastConnectedVpn;
+        return get(profileUUID);
     }
 
     public static VpnProfile getAlwaysOnVPN(Context context) {
@@ -167,7 +131,6 @@ public class ProfileManager {
 
         String uuid = prefs.getString("alwaysOnVpn", null);
         return get(uuid);
-
     }
 
     public Collection<VpnProfile> getProfiles() {
